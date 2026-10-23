@@ -1,13 +1,30 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: apaar-postgres
+    environment:
+      POSTGRES_DB: apaardb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: apaar-backend
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgres:5432/apaardb
     ports:
       - "8085:8085"
+    depends_on:
+      - postgres
     restart: always
 
   frontend:
@@ -21,3 +38,7 @@ services:
     depends_on:
       - backend
     restart: always
+
+volumes:
+  postgres_data:
+

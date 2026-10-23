@@ -55,16 +55,16 @@ import { Router, RouterModule } from '@angular/router';
                 type="text"
                 [(ngModel)]="searchId"
                 name="searchId"
-                placeholder="Enter 12-digit APAAR ID (e.g. APAAR12345678)..."
+                placeholder="Enter 12-digit APAAR ID (e.g. 123456789012)..."
                 class="search-input"
               />
               <button type="submit" class="gov-btn-saffron">Verify Now</button>
             </form>
             <div class="demo-pills">
-              <span>Quick Test Presets:</span>
-              <button (click)="setDemo('APAAR12345678')">Verified: <strong>APAAR12345678</strong></button>
-              <button (click)="setDemo('APAAR10000003')">Pending: <strong>APAAR10000003</strong></button>
-              <button (click)="setDemo('APAAR10000005')">Duplicate: <strong>APAAR10000005</strong></button>
+              <span>Quick Test Presets (12-Digit):</span>
+              <button (click)="setDemo('123456789012')">Verified: <strong>123456789012</strong></button>
+              <button (click)="setDemo('100000000003')">Pending: <strong>100000000003</strong></button>
+              <button (click)="setDemo('100000000005')">Duplicate: <strong>100000000005</strong></button>
             </div>
           </div>
         </div>

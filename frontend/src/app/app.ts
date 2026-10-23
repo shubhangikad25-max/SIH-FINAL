@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { ApaarService, AuthUser } from './services/apaar.service';
 
 @Component({
   selector: 'app-root',
@@ -14,13 +15,22 @@ export class App implements OnInit {
   currentDateStr: string = '';
   botOpen: boolean = false;
   botInput: string = '';
+  botLoading: boolean = false;
   botMessages: Array<{ sender: 'bot' | 'user'; text: string }> = [
     { sender: 'bot', text: 'Namaste! I am AICTE Sahayak, powered by Spring Boot 3 & Angular. How can I assist you with APAAR ID verification or approved intake audit?' }
   ];
 
+  currentUser: AuthUser | null = null;
+
+  constructor(public apaarService: ApaarService) {}
+
   ngOnInit() {
     this.updateTime();
     setInterval(() => this.updateTime(), 1000);
+
+    this.apaarService.user$.subscribe(user => {
+      this.currentUser = user;
+    });
   }
 
   updateTime() {
@@ -41,24 +51,32 @@ export class App implements OnInit {
     this.botOpen = !this.botOpen;
   }
 
+  logout() {
+    this.apaarService.logout();
+  }
+
   sendBotMessage(query?: string) {
     const text = query || this.botInput;
     if (!text.trim()) return;
 
     this.botMessages.push({ sender: 'user', text });
     if (!query) this.botInput = '';
+    this.botLoading = true;
 
-    setTimeout(() => {
-      let reply = 'Under SIH PS 26263, APAAR Verify synchronizes student records with Spring Boot JPA and DigiLocker.';
-      const l = text.toLowerCase();
-      if (l.includes('apaar')) {
-        reply = 'APAAR ID is a 12-digit lifelong academic identifier under NEP 2020 linking DigiLocker, ABC credits, and AICTE approval databases.';
-      } else if (l.includes('duplicate')) {
-        reply = 'The Spring Boot backend checks for duplicate APAAR IDs across all institutions and publishes real-time alerts to the Kafka topic.';
-      } else if (l.includes('intake')) {
-        reply = 'Colleges cannot admit students beyond their Sanctioned Approved Intake unless under the 5% Supernumerary (TFW) or 15% NRI/FN quota.';
+    // Connect to real authorized backend API endpoint
+    this.apaarService.sahayakQuery(text).subscribe({
+      next: (res) => {
+        this.botLoading = false;
+        const reply = res.reply || 'Under SIH PS 26263, APAAR Verify synchronizes student records with Spring Boot JPA and DigiLocker.';
+        this.botMessages.push({ sender: 'bot', text: reply });
+      },
+      error: () => {
+        this.botLoading = false;
+        this.botMessages.push({
+          sender: 'bot',
+          text: 'Under NEP 2020, the 12-digit APAAR ID links with DigiLocker and the Academic Bank of Credits (ABC) to ensure verified student records.'
+        });
       }
-      this.botMessages.push({ sender: 'bot', text: reply });
-    }, 500);
+    });
   }
 }

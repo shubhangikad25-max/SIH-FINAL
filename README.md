@@ -4,34 +4,81 @@
 **Organization:** All India Council for Technical Education (AICTE), Ministry of Education, Government of India  
 **Department:** Regulation Bureau  
 **Theme:** Smart Automation (SIH26263)  
-**Architecture:** The Classic Indian e-Governance Stack (Java 21 + Spring Boot 3 + Angular 21 + Angular Material + Apache POI + Apache Kafka)
+**Architecture:** Enterprise e-Governance Stack (Java 25/21 + Spring Boot 3.3.5 + Spring Security 6 + Angular 21 + Angular Material + PostgreSQL 16 / Dynamic Multi-Mode Datasource + Apache POI 5.2.5 + Apache Kafka)
 
 ---
 
-## 🌐 Live Production Deployments
+## 🌐 Live Deployments & Endpoints
 
-| Component | Cloud Platform | Live Production URL | Health Check / Status |
+| Component | Cloud Platform | Live Deployment URL | Health Check / Status |
 | :--- | :--- | :--- | :---: |
 | **Frontend Portal** | Render Static Cloud | **[https://aict-apaar-verify.onrender.com](https://aict-apaar-verify.onrender.com)** | 🟢 `Active (200 OK)` |
 | **Backend REST API** | Render Docker Cloud | **[https://apaar-backend.onrender.com](https://apaar-backend.onrender.com)** | 🟢 `Active (200 OK)` |
-| **API Health Endpoint** | Spring Boot 3 | `https://apaar-backend.onrender.com/api/college/stats` | 🟢 `Live JSON Feed` |
+| **API Health Endpoint** | Spring Boot 3 | `https://apaar-backend.onrender.com/api/public/health` | 🟢 `{"status":"UP"}` |
 
 ---
 
 ## 🏛️ System Overview
 
-**APAAR Verify** is the national-scale academic data verification and intake auditing platform mandated by the **National Education Policy (NEP 2020)**. It establishes the 12-digit **APAAR ID (Automated Permanent Academic Account Registry)** as the single verifiable truth for technical higher education.
+**APAAR Verify** is the national academic data verification and regulatory intake compliance platform mandated under the **National Education Policy (NEP 2020)** and **DigiLocker / Academic Bank of Credits (ABC)** guidelines. It establishes the 12-digit **APAAR ID (Automated Permanent Academic Account Registry)** as the verifiable academic identity across all AICTE-approved technical institutions.
 
-### Key Functional Capabilities
-1. **Intake Cap Anomaly Interception:** Reconciles institutional admissions against sanctioned AICTE intake caps (detecting +40 over-enrolment violations in real time).
-2. **Statutory Quota Auditing:** Audits Supernumerary seats (Tuition Fee Waiver - TFW), NRI, OCI, and Foreign National (FN) allocations.
-3. **Cross-Institution Duplicate Detection:** Publishes duplicate seat conflicts across state boundaries through real-time message events (Apache Kafka).
-4. **Verifiable Academic Credential Pass:** Generates digital credentials with cryptographic SHA-256 QR seals displaying dual APAAR ID and Student ID imprints.
-5. **Government-Standard Reporting:** Dynamic server-side spreadsheet generation using **Apache POI 5.2.5** (`.xlsx`).
+### Core Capabilities
+1. **Authentic Authentication & Authorization:**
+   - Spring Security 6 with stateless JWT Bearer tokens and BCrypt password encryption.
+   - Genuine **Continue with Google** OAuth 2.0 / OpenID Connect (OIDC) flow validating token authenticity on the backend.
+   - Brute-force rate limiting (5 consecutive failed attempts lock the account for 15 minutes).
+   - Time-limited, single-use cryptographic password reset tokens (30-minute validity).
+   - **Role-Based Access Control (RBAC):** `ROLE_STUDENT`, `ROLE_INSTITUTION_ADMIN`, `ROLE_AICTE_ADMIN`, `ROLE_VERIFIER`.
+   - **Insecure Direct Object Reference (IDOR) Protection:** Institution Admins can strictly view and manage their authorized institution's records.
+   - **Pending Approval Workflow:** New institutional administrator registrations remain in `PENDING` state until formally approved by an AICTE Super Admin. Public registration is prohibited from acquiring `AICTE_ADMIN`.
+
+2. **Persistent PostgreSQL Database & Multi-Mode Datasource:**
+   - Dynamic connection pool parser for Render's `DATABASE_URL` with HikariCP.
+   - Automatic zero-setup embedded H2 fallback for instant local development and test execution without external dependencies.
+   - Relational entities: Users, Roles, Colleges, Students, Duplicate Conflicts, DPDP Consent Records, Opaque QR Verification Tokens, Upload Jobs, Verification Audit Logs, and Password Reset Tokens.
+
+3. **Realistic 12-Digit APAAR Verification:**
+   - Strict validation matching the official 12-digit numeric identifier specification (`^\d{12}$`).
+   - Verifiable outcomes: `INVALID_IDENTIFIER_FORMAT`, `CONSENT_REQUIRED`, `RECORD_NOT_FOUND`, `VERIFICATION_PENDING`, `DUPLICATE_CONFLICT`, and `DEMO_VERIFICATION`.
+   - DPDP Act 2023 statutory consent capture before data disclosure.
+   - Cryptographic QR seal backed by opaque random verification tokens without leaking raw student PII.
+
+4. **Intake Cap & Supernumerary Quota Interception:**
+   - Reconciles actual enrolled students against sanctioned intake limits.
+   - Audits 5% Tuition Fee Waiver (TFW) supernumerary quota allocations.
+   - Intercepts over-intake violations in real time with dynamic variance calculations.
+
+5. **Cross-Institutional Duplicate Detection & Conflict Resolution:**
+   - Flags simultaneous admissions across state boundaries.
+   - Publishes duplicate seat anomalies asynchronously to Apache Kafka topic `aicte.apaar.duplicate-events`.
+   - Provides institutional dispute review and persistent resolution trails.
+
+6. **Real CSV Batch Ingestion:**
+   - Multipart file upload with row-by-row validation, duplicate checks, and intake cap compliance.
+
+7. **Official Government-Grade Reporting:**
+   - Server-side spreadsheet generation using **Apache POI 5.2.5** (`.xlsx`).
+
+8. **AICTE Sahayak (सहायक) Virtual Assistant:**
+   - Connected directly to backend API (`POST /api/public/sahayak-query`) with role enforcement and privacy safeguards.
 
 ---
 
-## 🚀 Running the Project
+## 🔐 Built-in Seed Accounts for SIH Evaluation
+
+The database seeds authentic records for instant testing of all roles:
+
+| Role | Email Address | Password | Permissions & Scope |
+| :--- | :--- | :--- | :--- |
+| **AICTE Super Admin** | `aicte.admin@aicte-india.org` | `Admin@2026!` | National regulator: approve colleges, national intake stats, Excel export |
+| **Institution Admin (Approved)** | `college@aicte.ac.in` | `College@2026!` | Delhi Institute of Engineering & Technology (Inst ID: `COL-101`) |
+| **Institution Admin (Pending)** | `pending.college@aicte.ac.in` | `College@2026!` | Awaiting approval from AICTE Admin (Login correctly denied until approved) |
+| **Verified Student** | `student@aicte.ac.in` | `Student@2026!` | Student verification profile and cryptographic academic pass |
+| **Credential Verifier** | `verifier@aicte.ac.in` | `Verifier@2026!` | Verifies opaque QR tokens for employer / university checks |
+
+---
+
+## 🚀 Running the Project Locally
 
 ### Prerequisites
 - **Java:** JDK 21 or higher (`java -version`)
@@ -40,111 +87,103 @@
 ---
 
 ### Step 1: Start the Spring Boot Backend (Port 8085)
-Open your terminal in the project root:
 ```bash
 cd backend
+# On Windows:
+$env:JAVA_HOME="<path-to-jdk-21-or-25>" # if not already in system PATH
+.\mvnw.cmd spring-boot:run
+
+# Or run the packaged fat JAR:
 java -jar target/apaar-verify-backend-1.0.0.jar
 ```
-*The Spring Boot server will initialize H2 in-memory JPA database with 50 seeded students and 5 institutions, start Tomcat on port `8085`, and prepare the Apache POI Excel report engine.*
+*The Spring Boot server initializes the database with seeded institutions and students, configures Spring Security with JWT filters, starts on port `8085`, and prepares the Apache POI Excel report engine.*
 
 ---
 
 ### Step 2: Start the Angular Frontend (Port 4200)
-Open a second terminal window:
 ```bash
 cd frontend
 npm start
 ```
-*The Angular development server will compile and host the application at **`http://localhost:4200`**.*
+*The Angular development server will compile and serve the portal at **`http://localhost:4200`**.*
 
 ---
 
-## 🧪 Step-by-Step Testing Guide
+## 🧪 Testing Workflows
 
-### 1. Student APAAR Verification Portal (`/student`)
-1. Open **`http://localhost:4200/student`**.
-2. Click any of the quick demo preset chips:
-   - **`APAAR12345678` (Verified):** Aarav Sharma (B.Tech CSE, 96 ABC Credits, DIET Delhi).
-   - **`APAAR10000003` (Pending):** Rohan Deshmukh / Priya Patel (Mechanical, pending intake audit).
-   - **`APAAR10000005` (Duplicate Conflict):** Mohammad Farhan Akhtar (flagged for simultaneous active seat in Delhi and UP).
-3. Observe the simulated 1-second DigiLocker verification latency, the DPDP Act 2023 statutory consent checkbox, and the 4-stage lifecycle timeline.
-4. Verify the **Official Verifiable Academic Credential Pass** displaying student credentials, institutional details, and cryptographic QR seal.
-
----
+### 1. Student APAAR Verification (`/student`)
+1. Navigate to **`http://localhost:4200/student`**.
+2. Select any authentic 12-digit preset:
+   - **`123456789012` (Verified):** Aarav Sharma (B.Tech CSE, 96 ABC Credits, DIET Delhi).
+   - **`100000000003` (Pending):** Rohan Deshmukh (Mechanical, pending intake audit).
+   - **`100000000005` (Duplicate Conflict):** Mohammad Farhan Akhtar (flagged for simultaneous active seat in Delhi and UP).
+3. Observe the DPDP Act 2023 statutory consent requirement, verification latency simulation, and the verifiable academic pass with cryptographic QR seal.
 
 ### 2. College Admin Portal (`/college`)
-1. Open **`http://localhost:4200/college`**.
-2. Sign in with the institutional credentials:
-   - **Institutional Email:** `college@aicte.ac.in`
-   - **Passkey:** `123456`
-3. Verify the **AICTE Regulatory Anomaly Alert**: Notice the red alert indicating enrolment (`1,240`) exceeds sanctioned intake (`1,200`) by **+40 students**.
-4. Check the 4 metric cards: Total Enrolled (`1,240`), Verified (`980`), Pending (`200`), Duplicates (`60`).
-5. Review the **National Duplicate Alert** cards for cross-college enrolment conflicts.
-6. In the Student Registry table, filter by **Pending** status. Click **Verify** on a pending student to test the real-time API mutation. The record status updates to **Verified** in Spring Boot JPA and refreshes the table instantly.
-7. Click **Bulk Upload CSV** to preview institutional batch intake processing.
-
----
+1. Navigate to **`http://localhost:4200/college`**.
+2. Sign in with:
+   - Email: `college@aicte.ac.in`
+   - Password: `College@2026!`
+3. Verify the **Intake Regulatory Anomaly Alert**: Enrolment (`1,240`) exceeds sanctioned intake (`1,200`) by **+40 students**.
+4. Test **Continue with Google**: Displays genuine OAuth flow or server-configured message.
+5. In the **Student Registry**, filter by status, test real-time status updates, resolve duplicate conflicts with notes, and upload CSV student rosters.
 
 ### 3. AICTE Super Admin Portal (`/aicte`)
-1. Open **`http://localhost:4200/aicte`**.
-2. Check national statistics: **9,840** Approved Institutions, **34.6 L** Enrolled Students, **31.1 L** Verified, **14,210** Duplicates Intercepted.
-3. Review state-wise APAAR adoption progress bars (Maharashtra, Tamil Nadu, Karnataka, Delhi NCR, UP).
-4. Review the **College-Wise Intake Compliance Master Table** showing institutional variance indicators (`+40` and `+15` Over-intake).
-5. Click **Export Apache POI Excel (.xlsx)**: Downloads an authentic `AICTE_National_Compliance_Report_2026.xlsx` file generated directly by Spring Boot using Apache POI.
-6. Inspect the **Kafka Duplicate Anomaly Stream** logs (`TOPIC: aicte.apaar.duplicate-events`) and the **Immutable System Audit Ledger**.
+1. Navigate to **`http://localhost:4200/aicte`**.
+2. Sign in with:
+   - Email: `aicte.admin@aicte-india.org`
+   - Password: `Admin@2026!`
+3. Review national intake variance compliance tables.
+4. Review **Pending Institution Administrator Approvals**: Approve or reject pending college registrations.
+5. Click **Export Apache POI Excel (.xlsx)**: Downloads an authentic `.xlsx` compliance report generated by Spring Boot.
 
 ---
 
-### 4. AICTE Sahayak (सहायक) AI Virtual Helpdesk
-1. Click the floating **AICTE Sahayak** widget in the bottom-right corner of any screen.
-2. Select any quick question (e.g., *"What is APAAR ID?"*, *"How duplicates caught?"*, or *"Intake Quotas"*).
-3. The virtual assistant returns instant regulatory guidance aligned with official AICTE norms.
+## 🛠️ Automated Testing & Build Validation
 
----
+### Run Backend Unit and Integration Tests:
+```bash
+cd backend
+.\mvnw.cmd test
+```
+*Executes all 15 test suites covering JWT authentication, rate limiting, IDOR prevention, 12-digit APAAR verification, DPDP consent, and QR token lookup.*
 
-## 🛠️ Automated Testing & Build Commands
+### Run Frontend Tests:
+```bash
+cd frontend
+npm test -- --run
+```
+*Executes all 8 Vitest unit tests verifying state management, auth interceptors, and components.*
 
-### Frontend Production Build:
+### Build Frontend for Production:
 ```bash
 cd frontend
 npm run build
 ```
 
-### Backend REST API cURL Health Check:
-```bash
-# Student verification
-curl -s http://localhost:8085/api/verify/APAAR12345678
-
-# College statistics & intake variance
-curl -s http://localhost:8085/api/college/stats
-
-# Apache POI Excel download
-curl -O http://localhost:8085/api/aicte/export-excel
-```
-
 ---
 
-## 📁 Project Architecture
+## 📁 Repository Structure
 
 ```text
-├── backend/                  # Java 21 + Spring Boot 3 Backend
-│   ├── src/main/java/        # SecurityConfig, Controllers, Services, Entities
+├── backend/                  # Java 25/21 + Spring Boot 3.3.5 Backend
+│   ├── src/main/java/        
 │   │   └── gov/aicte/apaar/
-│   │       ├── config/       # Spring Security 6 & CORS Configuration
-│   │       ├── controller/   # Verification, College, AICTE REST Controllers
-│   │       ├── model/        # JPA Entities (Student, College, AuditLog)
+│   │       ├── config/       # SecurityConfig, DataSourceConfig, DataInitializer
+│   │       ├── controller/   # Auth, Verification, College, AICTE, Public Controllers
+│   │       ├── model/        # User, Student, College, DuplicateConflict, ConsentRecord
 │   │       ├── repository/   # Spring Data JPA Repositories
-│   │       └── service/      # ExcelExportService (Apache POI), KafkaEventPublisherService
-│   ├── src/main/resources/   # application.properties (Port 8085, H2 JPA DB)
-│   ├── pom.xml               # Spring Boot 3, Spring Security, Apache POI, Kafka, JPA
-│   └── target/               # Fat JAR (apaar-verify-backend-1.0.0.jar)
+│   │       ├── security/     # JwtTokenProvider, JwtAuthenticationFilter, RateLimiterService
+│   │       └── service/      # AuthService, ApaarVerificationService, CollegeService, POI Export
+│   ├── src/test/java/        # Comprehensive Authentication, Security, and Verification Tests
+│   ├── pom.xml               # Spring Boot 3, JJWT, PostgreSQL, Apache POI, Kafka, H2
+│   └── mvnw, mvnw.cmd        # Maven Wrapper
 ├── frontend/                 # Angular 21 + Angular Material Frontend
 │   ├── src/app/
 │   │   ├── pages/            # Landing, Student, College, AICTE Components
-│   │   ├── services/         # ApaarService (HTTP Client connecting to port 8085)
-│   │   ├── app.routes.ts     # Client routing configuration
+│   │   ├── services/         # ApaarService (JWT Auth, dynamic APIs, session storage)
 │   │   └── app.ts            # Root component with Header, Footer, and AICTE Sahayak
-│   ├── src/styles.css        # Official AICTE Ministry Design System
-│   └── package.json          # Angular 21, Angular Material, Zone.js, Canvas-Confetti
+│   └── styles.css            # Official AICTE Ministry Design System
+├── docker-compose.yml        # Multi-container orchestration (PostgreSQL 16 + Backend)
 └── README.md                 # Complete project documentation & testing manual
 ```

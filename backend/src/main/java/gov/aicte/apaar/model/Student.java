@@ -44,6 +44,7 @@ public class Student {
     private String duplicateCollegeName;
     private String duplicateCollegeId;
     private String flagReason;
+    private String qrVerificationToken;
 
     public Student() {}
 
@@ -146,4 +147,7 @@ public class Student {
 
     public String getFlagReason() { return flagReason; }
     public void setFlagReason(String flagReason) { this.flagReason = flagReason; }
+
+    public String getQrVerificationToken() { return qrVerificationToken; }
+    public void setQrVerificationToken(String qrVerificationToken) { this.qrVerificationToken = qrVerificationToken; }
 }

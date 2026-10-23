@@ -72,3 +72,7 @@
 .sih-box p { font-size: 11px; margin: 0 0 6px; color: #e2e8f0; }
 .sih-box small { font-size: 10px; color: #94a3b8; }
 .copyright-bar { background: #040a16; text-align: center; font-size: 11px; color: #64748b; padding: 12px 20px; border-top: 1px solid #1e293b; }
+.user-pill { font-size: 11px; color: #fff; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; }
+.mini-logout-btn { background: #E65100; color: #fff; border: none; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; cursor: pointer; }
+.mini-logout-btn:hover { background: #c2410c; }
+

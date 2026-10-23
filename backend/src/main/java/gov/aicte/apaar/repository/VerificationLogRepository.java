@@ -9,4 +9,7 @@ import java.util.List;
 @Repository
 public interface VerificationLogRepository extends JpaRepository<VerificationLog, Long> {
     List<VerificationLog> findTop20ByOrderByTimestampDesc();
+    List<VerificationLog> findTop50ByOrderByTimestampDesc();
+    List<VerificationLog> findByRoleOrderByTimestampDesc(String role);
+    List<VerificationLog> findByActorOrderByTimestampDesc(String actor);
 }

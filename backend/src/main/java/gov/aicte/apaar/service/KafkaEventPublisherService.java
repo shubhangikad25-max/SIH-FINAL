@@ -40,11 +40,13 @@ public class KafkaEventPublisherService {
         String payload = String.format("{\"eventId\":\"%s\",\"apaarId\":\"%s\",\"student\":\"%s\",\"conflict\":\"%s\"}",
                 event.getEventId(), event.getApaarId(), event.getStudentName(), event.getCollegeB());
 
-        try {
-            kafkaTemplate.send(topicName, student.getApaarId(), payload);
-            log.info("Kafka Event Dispatched to [{}]: Dual enrolment for APAAR ID {}", topicName, student.getApaarId());
-        } catch (Exception e) {
-            log.warn("Kafka broker offline/unreachable. Event logged locally to audit store for APAAR ID: {}", student.getApaarId());
-        }
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                kafkaTemplate.send(topicName, student.getApaarId(), payload);
+                log.info("Kafka Event Dispatched to [{}]: Dual enrolment for APAAR ID {}", topicName, student.getApaarId());
+            } catch (Exception e) {
+                log.warn("Kafka broker offline/unreachable: {}. Event recorded locally in audit store.", e.getMessage());
+            }
+        });
     }
 }

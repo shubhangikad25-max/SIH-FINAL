@@ -13,7 +13,11 @@
     </div>
     <div class="utility-right">
       <span class="lang-tag">A/आ हिन्दी</span>
-      <a routerLink="/college" class="web-login-pill">🔒 Web Portal Login</a>
+      <span *ngIf="currentUser" class="user-pill">
+        👤 {{ currentUser.fullName }} ({{ currentUser.role }})
+        <button (click)="logout()" class="mini-logout-btn">Logout</button>
+      </span>
+      <a *ngIf="!currentUser" routerLink="/college" class="web-login-pill">🔒 Web Portal Login</a>
     </div>
   </div>
 </div>

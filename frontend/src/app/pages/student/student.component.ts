@@ -30,19 +30,19 @@ import { ApaarService, Student } from '../../services/apaar.service';
               type="text"
               [(ngModel)]="apaarInput"
               name="apaarInput"
-              placeholder="e.g. APAAR12345678 or APAAR10000003"
+              placeholder="e.g. 123456789012 or 100000000003"
               class="apaar-input"
             />
             <button type="submit" class="gov-btn-primary" [disabled]="loading">
-              {{ loading ? 'Querying DigiLocker...' : 'Fetch Student Profile' }}
+              {{ loading ? 'Querying National Academic Depository...' : 'Fetch Student Profile' }}
             </button>
           </div>
 
           <div class="preset-chips">
-            <span>Demo Chips:</span>
-            <button type="button" (click)="setPreset('APAAR12345678')">Verified: APAAR12345678</button>
-            <button type="button" (click)="setPreset('APAAR10000003')">Pending: APAAR10000003</button>
-            <button type="button" (click)="setPreset('APAAR10000005')">Duplicate: APAAR10000005</button>
+            <span>Demo Chips (12-Digit):</span>
+            <button type="button" (click)="setPreset('123456789012')">Verified: 123456789012</button>
+            <button type="button" (click)="setPreset('100000000003')">Pending: 100000000003</button>
+            <button type="button" (click)="setPreset('100000000005')">Duplicate: 100000000005</button>
           </div>
 
           <div class="consent-row">
@@ -261,6 +261,8 @@ export class StudentComponent implements OnInit {
   loading: boolean = false;
   student: Student | null = null;
   error: string | null = null;
+  outcome: string | null = null;
+  metadata: any = null;
   consentGiven: boolean = true;
 
   constructor(
@@ -285,26 +287,36 @@ export class StudentComponent implements OnInit {
 
   verify() {
     if (!this.apaarInput.trim()) {
-      this.error = 'Please enter a valid 12-digit APAAR ID.';
+      this.error = 'Please enter an authentic 12-digit APAAR ID.';
+      return;
+    }
+
+    if (!this.consentGiven) {
+      this.error = 'DPDP Statutory Consent must be selected before querying academic records.';
       return;
     }
 
     this.loading = true;
     this.error = null;
     this.student = null;
+    this.outcome = null;
     this.cdr.detectChanges();
 
-    this.apaarService.verifyApaar(this.apaarInput.trim()).subscribe({
+    this.apaarService.verifyApaar(this.apaarInput.trim(), this.consentGiven).subscribe({
       next: (res) => {
         this.loading = false;
         if (res.success && res.data) {
           this.student = res.data;
-          this.cdr.detectChanges();
+          this.outcome = res.outcome;
+          this.metadata = res.metadata;
+        } else {
+          this.error = res.message || 'Verification could not be completed.';
         }
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.loading = false;
+        this.outcome = err.error?.outcome || 'ERROR';
         this.error = err.error?.message || 'No student record found matching APAAR ID: ' + this.apaarInput;
         this.cdr.detectChanges();
       }

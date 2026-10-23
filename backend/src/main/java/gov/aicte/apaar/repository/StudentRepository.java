@@ -21,4 +21,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Student> searchStudents(String query);
 
     Long countByStatus(String status);
+    Long countByCollegeId(String collegeId);
+    Long countByCollegeIdAndStatus(String collegeId, String status);
+    List<Student> findByCollegeIdAndStatus(String collegeId, String status);
+    Optional<Student> findByQrVerificationToken(String qrVerificationToken);
 }

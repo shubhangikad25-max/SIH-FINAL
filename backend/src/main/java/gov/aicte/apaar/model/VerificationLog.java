@@ -18,11 +18,19 @@ public class VerificationLog {
     private String actor;
     private String role;
     private String ipAddress;
+    private String outcome;
+    private String details;
 
     public VerificationLog() {}
 
     public VerificationLog(LocalDateTime timestamp, String apaarId, String studentName,
                            String action, String actor, String role, String ipAddress) {
+        this(timestamp, apaarId, studentName, action, actor, role, ipAddress, "SUCCESS", null);
+    }
+
+    public VerificationLog(LocalDateTime timestamp, String apaarId, String studentName,
+                           String action, String actor, String role, String ipAddress,
+                           String outcome, String details) {
         this.timestamp = timestamp;
         this.apaarId = apaarId;
         this.studentName = studentName;
@@ -30,6 +38,8 @@ public class VerificationLog {
         this.actor = actor;
         this.role = role;
         this.ipAddress = ipAddress;
+        this.outcome = outcome;
+        this.details = details;
     }
 
     public Long getId() { return id; }
@@ -55,4 +65,10 @@ public class VerificationLog {
 
     public String getIpAddress() { return ipAddress; }
     public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
+
+    public String getOutcome() { return outcome; }
+    public void setOutcome(String outcome) { this.outcome = outcome; }
+
+    public String getDetails() { return details; }
+    public void setDetails(String details) { this.details = details; }
 }
