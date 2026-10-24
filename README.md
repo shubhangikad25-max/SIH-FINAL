@@ -70,11 +70,11 @@ The database seeds authentic records for instant testing of all roles:
 
 | Role | Email Address | Password | Permissions & Scope |
 | :--- | :--- | :--- | :--- |
-| **AICTE Super Admin** | `aicte.admin@aicte-india.org` | `Admin@2026!` | National regulator: approve colleges, national intake stats, Excel export |
-| **Institution Admin (Approved)** | `college@aicte.ac.in` | `College@2026!` | Delhi Institute of Engineering & Technology (Inst ID: `COL-101`) |
-| **Institution Admin (Pending)** | `pending.college@aicte.ac.in` | `College@2026!` | Awaiting approval from AICTE Admin (Login correctly denied until approved) |
-| **Verified Student** | `student@aicte.ac.in` | `Student@2026!` | Student verification profile and cryptographic academic pass |
-| **Credential Verifier** | `verifier@aicte.ac.in` | `Verifier@2026!` | Verifies opaque QR tokens for employer / university checks |
+| **AICTE Super Admin** | `aicte.admin@gov.in` | `admin123` | National regulator: approve colleges, national intake stats, Excel export |
+| **Institution Admin (Approved)** | `college@aicte.ac.in` | `123456` | Delhi Institute of Engineering & Technology (Inst ID: `COL001`) |
+| **Institution Admin (Pending)** | `pending.college@aicte.ac.in` | `123456` | Awaiting approval from AICTE Admin (Login correctly denied until approved) |
+| **Verified Student** | `student@aicte.ac.in` | `123456` | Student verification profile and cryptographic academic pass |
+| **Credential Verifier** | `verifier@aicte.ac.in` | `123456` | Verifies opaque QR tokens for employer / university checks |
 
 ---
 
