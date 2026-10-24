@@ -444,6 +444,17 @@ export class CollegeComponent implements OnInit {
         this.isAuthenticated = true;
         this.userEmail = user.email;
         this.fetchData();
+        return;
+      }
+    }
+
+    // Check for Google OAuth callback in URL hash (e.g. #id_token=...)
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const idToken = hashParams.get('id_token');
+      if (idToken) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        this.handleGoogleToken(idToken);
       }
     }
   }
@@ -520,8 +531,86 @@ export class CollegeComponent implements OnInit {
     this.loading = true;
     this.loginError = '';
 
-    // Attempt authentic Google login via backend API
-    this.apaarService.googleLogin({ idToken: '' }).subscribe({
+    this.apaarService.getGoogleAuthConfig().subscribe({
+      next: (cfg) => {
+        if (!cfg.configured || !cfg.clientId) {
+          this.loading = false;
+          this.loginError = 'Google OAuth 2.0 is not configured on this server. Please configure GOOGLE_CLIENT_ID environment variable or sign in with your institutional credentials.';
+          this.cdr.detectChanges();
+          return;
+        }
+        this.launchGoogleAuth(cfg.clientId);
+      },
+      error: () => {
+        this.loading = false;
+        this.loginError = 'Unable to reach backend authentication service. Please check your network or sign in with institutional credentials.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private launchGoogleAuth(clientId: string) {
+    if (typeof window === 'undefined') return;
+
+    const callbackHandler = (response: any) => {
+      if (response && response.credential) {
+        this.handleGoogleToken(response.credential);
+      } else {
+        this.loading = false;
+        this.loginError = 'Google sign-in was cancelled or did not return a valid credential.';
+        this.cdr.detectChanges();
+      }
+    };
+
+    if ((window as any).google?.accounts?.id) {
+      (window as any).google.accounts.id.initialize({
+        client_id: clientId,
+        callback: callbackHandler
+      });
+      (window as any).google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          this.redirectToGoogleOAuth(clientId);
+        }
+      });
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        (window as any).google.accounts.id.initialize({
+          client_id: clientId,
+          callback: callbackHandler
+        });
+        (window as any).google.accounts.id.prompt((notification: any) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            this.redirectToGoogleOAuth(clientId);
+          }
+        });
+      };
+      script.onerror = () => {
+        this.redirectToGoogleOAuth(clientId);
+      };
+      document.body.appendChild(script);
+    }
+  }
+
+  private redirectToGoogleOAuth(clientId: string) {
+    const redirectUri = window.location.origin + window.location.pathname;
+    const nonce = Math.random().toString(36).substring(2);
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${encodeURIComponent(clientId)}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `response_type=id_token&` +
+      `scope=${encodeURIComponent('openid email profile')}&` +
+      `nonce=${encodeURIComponent(nonce)}`;
+    window.location.href = googleAuthUrl;
+  }
+
+  private handleGoogleToken(idToken: string) {
+    this.loading = true;
+    this.loginError = '';
+    this.apaarService.googleLogin({ idToken }).subscribe({
       next: (res) => {
         this.loading = false;
         if (res.success && res.token) {
@@ -533,8 +622,7 @@ export class CollegeComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        // Displays clear configuration error without simulating mock authentication
-        this.loginError = err.error?.message || 'Google OAuth 2.0 is not configured on this server. Please configure GOOGLE_CLIENT_ID environment variable or sign in with your institutional credentials.';
+        this.loginError = err.error?.message || 'Google authentication failed. Please verify credentials.';
         this.cdr.detectChanges();
       }
     });

@@ -159,6 +159,10 @@ export class ApaarService {
     );
   }
 
+  getGoogleAuthConfig(): Observable<{ configured: boolean; clientId: string }> {
+    return this.http.get<{ configured: boolean; clientId: string }>(`${this.baseUrl}/auth/google/config`);
+  }
+
   googleLogin(payload: { idToken?: string; code?: string }): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/auth/google`, payload).pipe(
       tap(res => {

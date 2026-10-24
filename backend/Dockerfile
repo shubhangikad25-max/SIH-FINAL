@@ -11,4 +11,4 @@ WORKDIR /app
 COPY --from=build /app/target/apaar-verify-backend-*.jar app.jar
 ENV PORT=8085
 EXPOSE 8085
-ENTRYPOINT ["java", "-Dserver.port=${PORT:-8085}", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8085} -jar app.jar"]

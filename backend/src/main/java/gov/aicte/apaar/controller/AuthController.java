@@ -36,6 +36,16 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/google/config")
+    public ResponseEntity<Map<String, Object>> getGoogleAuthConfig() {
+        String clientId = authService.getEffectiveGoogleClientId();
+        boolean configured = clientId != null && !clientId.trim().isEmpty();
+        return ResponseEntity.ok(Map.of(
+                "configured", configured,
+                "clientId", configured ? clientId : ""
+        ));
+    }
+
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleLogin(@RequestBody GoogleLoginRequest req, HttpServletRequest request) {
         String ip = extractClientIp(request);

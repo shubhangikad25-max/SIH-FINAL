@@ -182,8 +182,24 @@ public class AuthService {
                 "Account created successfully");
     }
 
+    public String getEffectiveGoogleClientId() {
+        if (googleClientId != null && !googleClientId.trim().isEmpty()) {
+            return googleClientId.trim();
+        }
+        String env = System.getenv("GOOGLE_CLIENT_ID");
+        if (env != null && !env.trim().isEmpty()) {
+            return env.trim();
+        }
+        String sysProp = System.getProperty("google.client.id");
+        if (sysProp != null && !sysProp.trim().isEmpty()) {
+            return sysProp.trim();
+        }
+        return "";
+    }
+
     public AuthResponse googleLogin(GoogleLoginRequest req, String ipAddress) {
-        if (googleClientId == null || googleClientId.trim().isEmpty()) {
+        String effectiveClientId = getEffectiveGoogleClientId();
+        if (effectiveClientId.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                     "Google OAuth 2.0 is not configured on this server. Please configure GOOGLE_CLIENT_ID environment variable or sign in with email/password.");
         }
@@ -198,7 +214,7 @@ public class AuthService {
             @SuppressWarnings("unchecked")
             Map<String, Object> tokenInfo = restTemplate.getForObject(verifyUrl, Map.class);
 
-            if (tokenInfo == null || !googleClientId.equals(tokenInfo.get("aud"))) {
+            if (tokenInfo == null || !effectiveClientId.equals(tokenInfo.get("aud"))) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Google token audience.");
             }
 
