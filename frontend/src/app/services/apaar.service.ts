@@ -63,8 +63,17 @@ export class ApaarService {
 
   private get baseUrl(): string {
     if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryApi = urlParams.get('api');
+      if (queryApi) {
+        const cleanUrl = queryApi.replace(/\/$/, '');
+        localStorage.setItem('API_URL', cleanUrl);
+        return cleanUrl;
+      }
+
       const customUrl = (window as any).API_URL || localStorage.getItem('API_URL');
-      if (customUrl) return customUrl;
+      if (customUrl) return customUrl.replace(/\/$/, '');
+
       if (window.location.hostname !== 'localhost') {
         return 'https://apaar-backend.onrender.com/api';
       }
